@@ -38,7 +38,7 @@ if (password_verify($password, $user['password'])) {
     
     // Redirect based on role
     if ($user['is_admin'] == 1) {
-        header("Location: ../admin/dashboard.php");
+        header("Location: ../dashboard/dashboard.php");
     } else {
         header("Location: ../dashboard/dashboard.php");
     }
