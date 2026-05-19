@@ -38,8 +38,8 @@ if ($check->num_rows > 0) {
 // Insert user
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 $stmt = $conn->prepare("
-    INSERT INTO users (name, email, password, auth_type)
-    VALUES (?, ?, ?, 'manual')
+    INSERT INTO users (name, email, password, auth_type, is_admin)
+    VALUES (?, ?, ?, 'manual', 0)
 ");
 
 $stmt->bind_param("sss", $name, $email, $hashed_password);
@@ -49,6 +49,7 @@ if ($stmt->execute()) {
     $_SESSION['user_id'] = $conn->insert_id;
     $_SESSION['name'] = $name;
     $_SESSION['email'] = $email;
+    $_SESSION['is_admin'] = 0;
     
     header("Location: ../dashboard/dashboard.php");
     exit();

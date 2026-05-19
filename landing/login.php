@@ -1,7 +1,15 @@
 <?php
 session_start();
 $login_error = $_SESSION['login_error'] ?? '';
+$signup_error = $_SESSION['signup_error'] ?? '';
+$success_message = $_SESSION['success_message'] ?? '';
+$forgot_error = $_SESSION['forgot_error'] ?? '';
+$forgot_success = $_SESSION['forgot_success'] ?? '';
 unset($_SESSION['login_error']);
+unset($_SESSION['signup_error']);
+unset($_SESSION['success_message']);
+unset($_SESSION['forgot_error']);
+unset($_SESSION['forgot_success']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,10 +21,7 @@ unset($_SESSION['login_error']);
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  .error-message {
-    background: rgba(255, 68, 68, 0.1);
-    border: 1px solid rgba(255, 68, 68, 0.3);
-    color: #ff4444;
+  .error-message, .success-message, .info-message {
     padding: 12px 16px;
     border-radius: 8px;
     font-size: 14px;
@@ -26,16 +31,223 @@ unset($_SESSION['login_error']);
     gap: 10px;
     animation: slideIn 0.3s ease;
   }
-  .error-message svg {
+  .error-message {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    color: #ff4444;
+  }
+  .success-message {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+  }
+  .info-message {
+    background: rgba(0, 180, 216, 0.1);
+    border: 1px solid rgba(0, 180, 216, 0.3);
+    color: #00b4d8;
+  }
+  .error-message svg, .success-message svg, .info-message svg {
     flex-shrink: 0;
   }
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  /* Loading Screen */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 0, 69, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .loading-overlay.active {
+    display: flex;
+  }
+  .loader {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(144, 224, 239, 0.2);
+    border-top-color: var(--sky, #00b4d8);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .loading-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+  .loading-subtext {
+    color: rgba(255, 255, 255, 0.4);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+  }
+
+  /* Success Modal */
+  .success-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 0, 69, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+  .success-modal.active {
+    display: flex;
+  }
+  .success-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    max-width: 380px;
+    animation: modalIn 0.4s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .success-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.15);
+    border: 2px solid rgba(34, 197, 94, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+  }
+  .success-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #22c55e;
+    margin-bottom: 8px;
+  }
+  .success-text {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* Forgot Password Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 0, 69, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 9998;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(144, 224, 239, 0.2);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 400px;
+    width: 90%;
+    animation: modalIn 0.3s ease;
+  }
+  .modal-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .modal-sub {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 18px;
+  }
+  .modal-close {
+    float: right;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: #fff; }
+  
+  .forgot-link {
+    cursor: pointer;
+    color: var(--sky, #00b4d8);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .forgot-link:hover { color: var(--ice, #90e0ef); }
 </style>
 </head>
 <body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader"></div>
+  <div class="loading-text" id="loadingText">Signing you in...</div>
+  <div class="loading-subtext">Please wait a moment</div>
+</div>
+
+<!-- Success Modal -->
+<div class="success-modal" id="successModal">
+  <div class="success-card">
+    <div class="success-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="success-title">Account Created!</div>
+    <div class="success-text">Welcome to Resumazing! You're being redirected to your dashboard.</div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-overlay" id="forgotModal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeForgotModal()">&times;</button>
+    <div class="modal-title">Reset Password</div>
+    <div class="modal-sub">Enter your email and we'll send you a reset link.</div>
+    
+    <form id="forgotForm" onsubmit="return false;">
+      <div class="fg">
+        <label for="reset-email">Email</label>
+        <div class="iw">
+          <span class="iico"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></span>
+          <input type="email" id="reset-email" name="reset_email" placeholder="you@example.com" required>
+        </div>
+      </div>
+      
+      <div id="forgotMsg" style="margin-bottom: 10px;"></div>
+      
+      <button class="btn btn-l" type="button" onclick="submitForgotPassword()">Send Reset Link <span class="barrow">→</span></button>
+    </form>
+    
+    <p style="text-align:center;margin-top:12px;font-size:0.73rem;color:rgba(255,255,255,0.4);">
+      Remember your password? <span class="forgot-link" onclick="closeForgotModal()">Log in</span>
+    </p>
+  </div>
+</div>
 
 <div class="bg-wrap">
   <div class="bg-base"></div>
@@ -64,7 +276,7 @@ unset($_SESSION['login_error']);
       <div class="auth-card">
 
         <!-- LOGIN FORM -->
-        <form action="../database/login.php" method="POST">
+        <form action="../database/login.php" method="POST" id="loginForm" onsubmit="showLoading('Signing you in...')">
           <div class="panel-login">
             <div class="ptag"><span class="pip on"></span> Welcome back</div>
             <h1 class="ptitle">Log In</h1>
@@ -79,6 +291,16 @@ unset($_SESSION['login_error']);
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
               <?php echo htmlspecialchars($login_error); ?>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Success Message -->
+            <?php if ($success_message): ?>
+            <div class="success-message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <?php echo htmlspecialchars($success_message); ?>
             </div>
             <?php endif; ?>
 
@@ -109,8 +331,8 @@ unset($_SESSION['login_error']);
             </div>
 
             <div class="extras">
-              <label class="chk"><input type="checkbox"> Remember me</label>
-              <a href="#" class="forgot">Forgot password?</a>
+              <label class="chk"><input type="checkbox" name="remember_me" id="rememberMe"> Remember me</label>
+              <a href="#" class="forgot" onclick="openForgotModal(event)">Forgot password?</a>
             </div>
 
             <button class="btn btn-l" type="submit">Log In <span class="barrow">→</span></button>
@@ -121,11 +343,23 @@ unset($_SESSION['login_error']);
         <div class="split-badge" aria-hidden="true">OR</div>
 
         <!-- SIGN UP FORM -->
-        <form action="../database/signup.php" method="POST">
+        <form action="../database/signup.php" method="POST" id="signupForm" onsubmit="showLoading('Creating your account...')">
           <div class="panel-signup">
             <div class="ptag"><span class="pip"></span> New here?</div>
             <h1 class="ptitle">Create Account</h1>
             <p class="psub">Free forever. No credit card needed.</p>
+
+            <!-- Signup Error Message Display -->
+            <?php if ($signup_error): ?>
+            <div class="error-message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <?php echo htmlspecialchars($signup_error); ?>
+            </div>
+            <?php endif; ?>
 
             <div class="soc-row">
               <a href="../google/google-login.php" class="soc-btn">
@@ -183,13 +417,96 @@ unset($_SESSION['login_error']);
         <!-- END SIGN UP FORM -->
 
       </div>
-
-      
       
     </div>
   </div>
 </div>
 
 <script src="script.js"></script>
+<script>
+// Loading Screen
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || 'Please wait...';
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+
+// Auto-dismiss all messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+  const messages = document.querySelectorAll('.error-message, .success-message, .info-message');
+  messages.forEach(function(msg) {
+    setTimeout(function() {
+      msg.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+      msg.style.opacity = '0';
+      msg.style.transform = 'translateY(-10px)';
+      setTimeout(function() {
+        if (msg.parentNode) {
+          msg.remove();
+        }
+      }, 500);
+    }, 5000); // 5 seconds for all messages
+  });
+});
+
+// Forgot Password Modal
+function openForgotModal(e) {
+  e.preventDefault();
+  document.getElementById('forgotModal').classList.add('active');
+  document.getElementById('forgotMsg').innerHTML = '';
+  document.getElementById('reset-email').value = '';
+}
+
+function closeForgotModal() {
+  document.getElementById('forgotModal').classList.remove('active');
+}
+
+function submitForgotPassword() {
+  const email = document.getElementById('reset-email').value;
+  const msgDiv = document.getElementById('forgotMsg');
+  
+  if (!email) {
+    msgDiv.innerHTML = '<div class="error-message">Please enter your email address.</div>';
+    return;
+  }
+  
+  // Show loading on button
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = 'Sending...';
+  
+  fetch('../database/forgot-password.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'email=' + encodeURIComponent(email)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      msgDiv.innerHTML = '<div class="success-message"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' + data.message + '</div>';
+      setTimeout(closeForgotModal, 3000);
+    } else {
+      msgDiv.innerHTML = '<div class="error-message"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' + data.message + '</div>';
+    }
+    btn.disabled = false;
+    btn.innerHTML = 'Send Reset Link <span class="barrow">→</span>';
+  })
+  .catch(err => {
+    msgDiv.innerHTML = '<div class="error-message">Something went wrong. Please try again.</div>';
+    btn.disabled = false;
+    btn.innerHTML = 'Send Reset Link <span class="barrow">→</span>';
+  });
+}
+
+// Close modals on escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeForgotModal();
+  }
+});
+
+// Close modals on outside click
+document.getElementById('forgotModal').addEventListener('click', function(e) {
+  if (e.target === this) closeForgotModal();
+});
+</script>
 </body>
 </html>
